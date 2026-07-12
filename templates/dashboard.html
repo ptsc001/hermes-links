@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <meta name="googlebot" content="noindex">
+  <title>Hermes Links</title>
+  <link rel="stylesheet" href="/links/static/style.css">
+</head>
+<body>
+
+  <!-- Page Loader -->
+  <div class="page-loader" id="pageLoader">
+    <div class="loader-ring"></div>
+  </div>
+
+  <!-- Aurora Background -->
+  <div class="aurora">
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
+  </div>
+  <div class="noise"></div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- Main Container -->
+  <div class="container">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" stroke="url(#g1)"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" stroke="url(#g2)"/>
+          <defs>
+            <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6c5ce7"/>
+              <stop offset="100%" stop-color="#00cec9"/>
+            </linearGradient>
+            <linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#00cec9"/>
+              <stop offset="100%" stop-color="#6c5ce7"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <h1>Hermes Links</h1>
+      <p>Deine gespeicherten Links & Notizen – synchronisiert vom iPhone</p>
+      <div class="api-key-badge" onclick="copyApiKey()" title="API Key kopieren">
+        <span>🔑</span>
+        <span class="key-text" id="apiKeyDisplay">{{ api_key }}</span>
+        <span style="font-size:0.7rem;opacity:0.5">klicken zum Kopieren</span>
+      </div>
+    </header>
+
+    <!-- Stats -->
+    <div class="stats-grid" id="statsGrid">
+      <div class="stat-card"><div class="stat-value" id="statTotal">0</div><div class="stat-label">Gesamt</div></div>
+      <div class="stat-card"><div class="stat-value" id="statUnread">0</div><div class="stat-label">Ungelesen</div></div>
+      <div class="stat-card"><div class="stat-value" id="statCategories">0</div><div class="stat-label">Kategorien</div></div>
+    </div>
+
+    <!-- Filter -->
+    <div class="filter-bar" id="filterBar">
+      <button class="filter-btn active" data-filter="all">Alle</button>
+      <button class="filter-btn" data-filter="unread">Ungelesen</button>
+      <button class="filter-btn" data-filter="favorites">Favoriten</button>
+    </div>
+
+    <!-- Link List -->
+    <div id="linkList">
+      <div class="loading">
+        <div class="spinner"></div>
+        Lade Links...
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="glass-card" style="animation-delay:0.5s">
+      <h3 style="font-weight:600;margin-bottom:16px;font-size:0.95rem">📱 iPhone Shortcut einrichten</h3>
+      <div class="instructions">
+        <div class="instruction-step">
+          <div class="step-num">1</div>
+          <strong>Shortcuts-App öffnen</strong>
+          <p style="margin-top:4px;color:var(--text-secondary)">Automatisierung → Neuer Kurzbefehl</p>
+        </div>
+        <div class="instruction-step">
+          <div class="step-num">2</div>
+          <strong>Share Sheet aktivieren</strong>
+          <p style="margin-top:4px;color:var(--text-secondary)">App „Kurzbefehle" → Tippe auf „i" → In Teilen-Blatt anzeigen ✅</p>
+        </div>
+        <div class="instruction-step">
+          <div class="step-num">3</div>
+          <strong>Aktionen hinzufügen</strong>
+          <p style="margin-top:4px;color:var(--text-secondary)">
+            • „Eingabe empfangen" von Kurzbefehlen<br>
+            • „URL" – Inhalt aus Eingabe<br>
+            • „Text abfragen" für Notiz<br>
+            • „Inhalte der URL abrufen" – POST an API
+          </p>
+        </div>
+        <div class="instruction-step">
+          <div class="step-num">4</div>
+          <strong>API-URL konfigurieren</strong>
+          <p style="margin-top:4px;color:var(--text-secondary)">POST Anfrage an:</p>
+          <code id="apiUrlDisplay">https://links.innovanext.de/links/api/links</code>
+          <p style="margin-top:4px;color:var(--text-secondary)">Header: <code>X-API-Key</code> mit deinem Schlüssel</p>
+          <p style="margin-top:4px;color:var(--text-secondary)">Body: JSON <code>{"url": "...", "note": "..."}</code></p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin;
+    let apiKey = '{{ api_key }}';
+
+    // ── Toast ──
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // ── Copy API Key ──
+    function copyApiKey() {
+      navigator.clipboard.writeText(apiKey).then(() => showToast('API Key kopiert!'));
+    }
+
+    // ── Fetch Links ──
+    async function fetchLinks(filter = 'all') {
+      const list = document.getElementById('linkList');
+      list.innerHTML = '<div class="loading"><div class="spinner"></div>Lade Links...</div>';
+
+      try {
+        let url = `/links/api/links?limit=100&order=desc`;
+        if (filter === 'unread') url += '&is_read=false';
+        if (filter === 'favorites') url += '&is_favorite=true';
+
+        const res = await fetch(url, { headers: { 'X-API-Key': apiKey } });
+        const data = await res.json();
+        renderLinks(data.links);
+        updateStats();
+      } catch (e) {
+        list.innerHTML = `<div class="empty-state"><p style="color:#e74c3c">Fehler beim Laden: ${e.message}</p></div>`;
+      }
+    }
+
+    // ── Render Links ──
+    function renderLinks(links) {
+      const list = document.getElementById('linkList');
+      if (links.length === 0) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+            </svg>
+            <h3>Noch keine Links gespeichert</h3>
+            <p>Teile einen Link via iPhone Share Sheet → „Hermes Links" – er erscheint sofort hier.</p>
+          </div>`;
+        return;
+      }
+
+      list.innerHTML = links.map((link, i) => {
+        const date = new Date(link.created_at).toLocaleDateString('de-DE', {
+          day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
+        });
+        const domain = extractDomain(link.url);
+        const favicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
+        return `
+          <div class="glass-card" style="animation-delay:${i * 0.05}s">
+            <div class="link-item">
+              <div class="link-icon">
+                <img src="${favicon}" alt="" width="20" height="20" onerror="this.parentElement.textContent='🔗'">
+              </div>
+              <div class="link-content">
+                <div class="link-title">
+                  <a href="${link.url}" target="_blank" rel="noopener noreferrer" style="color:inherit;text-decoration:none">
+                    ${link.title || domain}
+                  </a>
+                </div>
+                <div class="link-domain">${domain}</div>
+                ${link.note ? `<div class="link-note">${escapeHtml(link.note)}</div>` : ''}
+                <div class="link-meta">
+                  <span>${date}</span>
+                  ${link.category ? `<span>${link.category}</span>` : ''}
+                  ${link.is_favorite ? `<span style="color:#fdcb6e">★</span>` : ''}
+                </div>
+              </div>
+              <div class="link-actions">
+                <button onclick="markRead(${link.id})" title="Als gelesen markieren">✓</button>
+                <button onclick="toggleFavorite(${link.id})" title="Favorit">★</button>
+                <button class="delete-btn" onclick="deleteLink(${link.id})" title="Löschen">✕</button>
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ── Update Stats ──
+    async function updateStats() {
+      try {
+        const res = await fetch('/links/api/stats', { headers: { 'X-API-Key': apiKey } });
+        const data = await res.json();
+        document.getElementById('statTotal').textContent = data.total;
+        document.getElementById('statUnread').textContent = data.unread;
+        document.getElementById('statCategories').textContent = Object.keys(data.categories).length || 0;
+      } catch (_) {}
+    }
+
+    // ── Actions ──
+    async function markRead(id) {
+      await fetch(`/links/api/links/${id}`, {
+        method: 'PATCH',
+        headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_read: true })
+      });
+      showToast('Als gelesen markiert');
+      fetchLinks(getActiveFilter());
+    }
+
+    async function toggleFavorite(id) {
+      const res = await fetch(`/links/api/links/${id}`, { headers: { 'X-API-Key': apiKey } });
+      const link = await res.json();
+      await fetch(`/links/api/links/${id}`, {
+        method: 'PATCH',
+        headers: { 'X-API-Key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_favorite: !link.is_favorite })
+      });
+      showToast(link.is_favorite ? 'Favorit entfernt' : 'Als Favorit markiert');
+      fetchLinks(getActiveFilter());
+    }
+
+    async function deleteLink(id) {
+      if (!confirm('Link löschen?')) return;
+      await fetch(`/links/api/links/${id}`, {
+        method: 'DELETE',
+        headers: { 'X-API-Key': apiKey }
+      });
+      showToast('Gelöscht');
+      fetchLinks(getActiveFilter());
+    }
+
+    // ── Helpers ──
+    function extractDomain(url) {
+      try { return new URL(url).hostname.replace('www.', ''); }
+      catch { return url; }
+    }
+    function escapeHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s;
+      return d.innerHTML;
+    }
+    function getActiveFilter() {
+      return document.querySelector('.filter-btn.active')?.dataset?.filter || 'all';
+    }
+
+    // ── Filter Tabs ──
+    document.getElementById('filterBar').addEventListener('click', (e) => {
+      const btn = e.target.closest('.filter-btn');
+      if (!btn) return;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      fetchLinks(btn.dataset.filter);
+    });
+
+    // ── Init ──
+    document.addEventListener('DOMContentLoaded', () => {
+      fetchLinks('all');
+      // Auto-refresh every 30s
+      setInterval(() => fetchLinks(getActiveFilter()), 30000);
+      // Hide page loader
+      setTimeout(() => document.getElementById('pageLoader').classList.add('hidden'), 400);
+    });
+  </script>
+</body>
+</html>
