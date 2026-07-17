@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Hermes Brain</title>
+  <link rel="stylesheet" href="/brain/static/style.css">
+</head>
+<body class="login-body">
+  <div class="login-container">
+    <div class="login-card">
+      <div class="logo">🧠</div>
+      <h1>Hermes Brain</h1>
+      <form method="post" action="/brain/login">
+        <input type="password" name="password" placeholder="Passwort" autofocus required>
+        <button type="submit">Entsperren</button>
+      </form>
+      {% if error %}
+      <p class="error">{{ error }}</p>
+      {% endif %}
+    </div>
+  </div>
+</body>
+</html>

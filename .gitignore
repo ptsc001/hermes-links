@@ -4,3 +4,7 @@ __pycache__/
 .env
 .venv/
 static/.DS_Store
+.brain_password
+.brain_salt
+secret.key
+static/uploads/
