@@ -163,19 +163,17 @@ header {
   gap: 4px;
 }
 .btn-quick:hover { background: var(--border); color: var(--text); }
-.btn-voice-label {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.voice-link {
-  color: var(--text-dim);
-  text-decoration: none;
-}
-.btn-voice-label:hover .voice-link { color: var(--text); }
 
-/* ── Extra Panels (Link/Image forms) ─────────────────────────- */
+/* ── Siri Info Panel ──────────────────────────────────────────── */
+.siri-info h3 { margin-bottom: 12px; font-size: 15px; font-weight: 600; }
+.siri-info ol { margin: 0 0 16px 18px; font-size: 13px; color: var(--text-dim); line-height: 1.8; }
+.siri-details { background: var(--surface2); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 12px; }
+.siri-details p { margin-bottom: 10px; font-size: 12px; color: var(--text-dim); }
+.siri-details p:last-child { margin-bottom: 0; }
+.siri-details code { display: block; background: var(--bg); color: var(--accent); font-family: "SF Mono", "Cascadia Code", monospace; font-size: 11px; padding: 6px 8px; border-radius: 6px; margin-top: 4px; word-break: break-all; white-space: pre-wrap; }
+code.select-all { user-select: all; -webkit-user-select: all; }
+
+/* ── Extra Panels (Link/Image/Siri forms) ─────────────────────────- */
 .extra-panel {
   background: var(--surface);
   border: 1px solid var(--border);

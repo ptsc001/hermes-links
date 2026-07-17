@@ -45,10 +45,7 @@
       <div class="quick-actions">
         <button id="showLinkBtn" class="btn-quick" type="button">🔗 Link</button>
         <button id="showImageBtn" class="btn-quick" type="button">🖼️ Bild</button>
-        <label class="btn-quick btn-voice-label" title="Sprachnachricht an Hermes">
-          🎤
-          <a href="tg://resolve?domain=innovanext_bot" class="voice-link" target="_blank">Voice</a>
-        </label>
+        <button id="showSiriBtn" class="btn-quick" type="button" title="Siri Shortcut einrichten">📲 Kurzbefehl</button>
       </div>
 
       <!-- Link Input (collapsible) -->
@@ -79,6 +76,32 @@
             <button type="button" class="btn-cancel" id="cancelImage">Abbrechen</button>
           </div>
         </form>
+      </div>
+
+      <!-- Siri Shortcut Panel -->
+      <div id="siriPanel" class="extra-panel" style="display:none">
+        <div class="siri-info">
+          <h3>📲 Siri Shortcut</h3>
+          <ol>
+            <li>Kurzbefehle-App öffnen</li>
+            <li>Neuer Kurzbefehl → "Brain Dump"</li>
+            <li>Aktion: Texteingabe anfordern</li>
+            <li>Aktion: Inhalte abrufen (POST)</li>
+          </ol>
+          <div class="siri-details">
+            <p><strong>URL:</strong><br>
+            <code class="select-all">https://representing-remedy-shape-obligations.trycloudflare.com/brain/api/dump</code></p>
+            <p><strong>Header:</strong><br>
+            <code>Content-Type: application/json</code><br>
+            <code>X-API-Key: bk_cu4sg99-XafK_PncBqLeC_Vxtgd_QmVWZHh5b2IKUnQ</code></p>
+            <p><strong>Body:</strong><br>
+            <code>{"text": "{{Eingabe}}", "source": "siri"}</code></p>
+          </div>
+          <div class="extra-actions">
+            <a href="shortcuts://run-shortcut?name=Brain%20Dump" class="btn-primary" style="display:inline-block;text-align:center;text-decoration:none;flex:1">⚡ Shortcut ausführen</a>
+            <button type="button" class="btn-cancel" id="cancelSiri">Schließen</button>
+          </div>
+        </div>
       </div>
 
       <!-- Feedback -->
@@ -148,6 +171,17 @@
     });
     document.getElementById('cancelImage').addEventListener('click', () => {
       document.getElementById('imagePanel').style.display = 'none';
+    });
+
+    // ── Siri Shortcut Panel ──────────────────────────────────────
+    document.getElementById('showSiriBtn').addEventListener('click', () => {
+      document.getElementById('linkPanel').style.display = 'none';
+      document.getElementById('imagePanel').style.display = 'none';
+      const panel = document.getElementById('siriPanel');
+      panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+    });
+    document.getElementById('cancelSiri').addEventListener('click', () => {
+      document.getElementById('siriPanel').style.display = 'none';
     });
 
     // ── Image Upload Zone ─────────────────────────────────────
