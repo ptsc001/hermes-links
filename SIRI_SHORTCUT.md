@@ -1,87 +1,60 @@
-# Siri Shortcut – Hermes Brain Dump
+# Siri Shortcut – Brain Dump in < 5 Sekunden
 
-## Überblick
+## Was du brauchst
+- iOS 16+ (Shortcuts App)
+- Die URL und den API-Key aus dem Dashboard
 
-Mit einem iOS Kurzbefehl (Shortcut) kannst du per Siri-Sprachbefehl Notizen, Aufgaben und Ideen direkt in Hermes Brain speichern – ohne die App zu öffnen.
+## Schritt-für-Schritt
 
-## 1. Kurzbefehl installieren
+### 1. Shortcuts App öffnen
+Auf deinem iPhone: **Shortcuts** → **+** (neuer Shortcut)
 
-Öffne diesen Link auf dem iPhone:
+### 2. Auslöser setzen
+- Tippe auf **"App oder Aktion suchen"** → suche **"Siri"** → wähle **"In Siri fragen"**
+- Gib einen Satz ein wie: **"Brain Dump"** oder **"Merken"**
+- (Alternativ: **"App oder Aktion suchen"** → suche **"Apple Watch"** → wähle **"Auf der Apple Watch zeigen"** – dann via Watch auslösbar)
 
-> **[Kurzbefehl installieren](https://www.icloud.com/shortcuts/...)**
+### 3. Text erfassen
+- Tippe auf **+** unter dem Trigger → suche **"Text anfragen"** → wähle **"Eingabe anfordern"**
+- Frage: **"Was soll ich mir merken?"**
+- Standard-Text: *(leer lassen)*
 
-(Da der Link dynamisch ist, folge stattdessen der Anleitung unter 2.)
+### 4. API-Aufruf
+- Tippe auf **+** → suche **"Inhalt der URL"** → wähle **"URL-Inhalt abrufen"**
+  - **Methode:** POST
+  - **URL:** `https://highlighted-vancouver-shakespeare-admission.trycloudflare.com/brain/api/dump`
+  - **Headers:**
+    - Key: `X-API-Key` → Text: `bk_svrz-X9hrybfdLdGluleOA3NuL2RLrAX`
+    - Key: `Content-Type` → Text: `application/json`
+  - **Request-Body:** JSON → `{"text": "`**Eingabe (Magische Variable aus Schritt 3 einfügen)**`", "source": "siri"}`
 
-## 2. Manuelle Einrichtung (5 Minuten)
+  **Wichtig:** Um die Eingabe einzufügen: tippe lange auf den Body → **"Magische Variable auswählen"** → wähle **"Text anfragen"**
 
-### Schritt 1: Kurzbefehl öffnen
+### 5. Bestätigung (optional)
+- Tippe auf **+** → suche **"Text"** → wähle **"Text"**
+  - Gib ein: **"✅ Gespeichert: **"** und hänge die **Eingabe** dahinter
+- Tippe auf **+** → suche **"Sprechen"** → wähle **"Text vorlesen"**
 
-1. Öffne die **Kurzbefehle**-App auf dem iPhone
-2. Tippe auf **+** (neuer Kurzbefehl)
-3. Tippe auf **Kurzbefehl umbenennen** → nenne ihn **"Brain Dump"**
-4. Tippe auf **App-Symbol auswählen** → wähle 🧠
+### 6. Shortcut benennen
+- Tippe oben auf den Namen → **"Brain Dump"**
 
-### Schritt 2: Eingabe definieren
+## Nutzung
 
-5. Tippe auf **+ Aktion hinzufügen**
-6. Suche nach **"Texteingabe"** → wähle **"Texteingabe anfordern"**
-7. Ändere die Frage zu: **"Was geht dir durch den Kopf?"**
+### Per Siri:
+**"Hey Siri, Brain Dump"** – Siri fragt "Was soll ich mir merken?" – du sprichst deinen Text – fertig.
 
-### Schritt 3: Aktion hinzufügen
+### Per Apple Watch:
+Wenn du Schritt 2b gemacht hast: Shortcut erscheint auf der Watch → antippen → dikrieren → speichern.
 
-8. Tippe erneut auf **+**
-9. Suche nach **"Inhalte abrufen"** → wähle **"Inhalte abrufen"**
-10. Fülle die Felder aus:
-    - **URL:** `https://representing-remedy-shape-obligations.trycloudflare.com/brain/api/dump`
-    - **Methode:** `POST`
-    - **Header hinzufügen:**
-      - Key: `Content-Type` → Value: `application/json`
-      - Key: `X-API-Key` → Value: `bk_cu4sg99-XafK_PncBqLeC_Vxtgd_QmVWZHh5b2IKUnQ`
-    - **Anfragetext:** `{"text": "{{Eingabe}}", "source": "siri"}`
+### Per Control Center (optional):
+Shortcuts App → Shortcut → **"Zu Home-Bildschirm"** → als App-Icon ablegen.
 
-### Schritt 4: Ergebnis anzeigen
+---
 
-11. Tippe auf **+**
-12. Suche nach **"QuickLook"** oder **"Ergebnis anzeigen"**
-13. Wähle **"Schnellanzeige"** – so siehst du die Bestätigung
+## Test
+Nach dem Einrichten: Einfach **"Hey Siri, Brain Dump – Meeting mit Müller um 15 Uhr"** – der Eintrag landet in der Datenbank und ich sehe ihn sofort.
 
-### Schritt 5: Zu Siri hinzufügen
-
-14. Tippe oben rechts auf das **Info-Symbol (i)**
-15. Aktiviere **"Zu Siri hinzufügen"**
-16. Nimm den Satz auf: **"Brain dump [Text]"** oder **"Merken: [Text]"**
-
-## 3. Nutzung
-
-**Per Siri:**
-- *"Hey Siri, Brain dump Meeting morgen um 10 Uhr"*
-- *"Hey Siri, Merken: GitHub Token erneuern"*
-- *"Hey Siri, Brain Dump"* → Siri fragt nach Text
-
-**Per Kurzbefehl:**
-- Vom Home-Bildschirm: Kurzbefehl-Widget tippen
-- Aus der Kurzbefehle-App: "Brain Dump" antippen
-
-## 4. Homescreen Shortcut (Web-App)
-
-1. Safari öffnen → `https://representing-remedy-shape-obligations.trycloudflare.com/brain/` aufrufen
-2. Login mit Passwort: `!!pS!!220252-`
-3. Tippe auf **Teilen-Button** (unten Mitte)
-4. Scrolle runter → **"Zum Home-Bildschirm"**
-5. Name: **"Brain"** → **"Hinzufügen"**
-
-Ab jetzt öffnest du die App wie eine native App vom Home-Bildschirm.
-
-## Technischer Hintergrund
-
-- **API-Endpoint:** `POST https://.../brain/api/dump`
-- **Authentifizierung:** `X-API-Key` Header (oben)
-- **Payload:** `{"text": "...", "source": "siri"}`
-- **Antwort:** `{"status": "ok", "item": {...}}`
-- **Auto-Klassifikation:** Termine, ToDos, Ideen, Privates, Business werden automatisch erkannt
-
-## Trouble
-
-- **"Nicht autorisiert"** → API-Key ist falsch. Schick mir eine Nachricht.
-- **Tunnel tot** → Cloudflare-URL kann sich nach Neustart ändern. Schreib mir, ich geb dir die neue URL.
-- **Alles rot/Error** → Schreib mir den Wortlaut der Fehlermeldung.
+## Was passiert danach?
+- Der Cron-Job (7:30 Uhr) verarbeitet alle unprocessed Items
+- Termine → Kalender, Todos → Erinnerungen
+- Wenn du was dringendes hast: schreib mir einfach hier – ich seh die neuen Einträge in der DB live
