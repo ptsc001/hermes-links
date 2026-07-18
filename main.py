@@ -16,6 +16,7 @@ from pydantic import BaseModel
 
 import auth
 import crypto
+import caldav_processor
 
 # ── App Setup ──────────────────────────────────────────────────────
 
@@ -274,6 +275,23 @@ async def _load_items(item_type: str = None, limit: int = 50, offset: int = 0) -
     return items
 
 
+async def _auto_process_item(item: dict):
+    """Process a saved item via CalDAV and update DB with result."""
+    try:
+        result = caldav_processor.process_item(item)
+        if result["success"] and result["action"]:
+            action_taken = result["action"]
+            db = await get_db()
+            await db.execute(
+                "UPDATE notes SET is_processed = 1, action_taken = ?, updated_at = ? WHERE id = ?",
+                (action_taken, datetime.now(timezone.utc).isoformat(), item["id"]),
+            )
+            await db.commit()
+            await db.close()
+    except Exception as e:
+        pass  # Don't block the save if processing fails
+
+
 # ── Session-Auth Endpoints (Web Dashboard) ─────────────────────────
 
 @app.post("/brain/dump")
@@ -290,6 +308,9 @@ async def brain_dump(dump: dict, _=Depends(require_session)):
         item = await _save_item("link", text, metadata={"url": text, "title": title}, source=source)
     else:
         item = await _save_item("note", text, source=source)
+
+    await _auto_process_item(item)
+
     return {"status": "ok", "item": item}
 
 @app.post("/brain/dump/link")
@@ -390,6 +411,9 @@ async def api_brain_dump(dump: dict, api_key: Optional[str] = Header(None, alias
         item = await _save_item("link", text, metadata={"url": text, "title": title}, source=source)
     else:
         item = await _save_item("note", text, source=source)
+
+    await _auto_process_item(item)
+
     return {"status": "ok", "item": item}
 
 @app.get("/brain/api/health")
@@ -404,22 +428,82 @@ async def api_pending(api_key: Optional[str] = Header(None, alias="X-API-Key")):
     return {"items": [i for i in items if not i["is_processed"]], "count": 0}
 
 @app.post("/brain/api/process/{item_id}")
-async def api_mark_processed(
+async def api_process_item(
     item_id: int,
-    action_taken: str = Form(""),
     api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
+    """Process a single item via CalDAV."""
     if not api_key or not auth.verify_api_key(api_key):
         raise HTTPException(403, "Valid API key required")
-    now = datetime.now(timezone.utc).isoformat()
+
+    # Load item by ID directly
     db = await get_db()
-    await db.execute(
-        "UPDATE notes SET is_processed = 1, action_taken = ?, updated_at = ? WHERE id = ?",
-        (action_taken, now, item_id),
-    )
-    await db.commit()
+    cursor = await db.execute("SELECT * FROM notes WHERE id = ?", (item_id,))
+    row = await cursor.fetchone()
     await db.close()
-    return {"status": "ok"}
+
+    if not row:
+        raise HTTPException(404, "Item not found")
+
+    item = dict(row)
+    # Decrypt the stored ciphertext
+    try:
+        item["text"] = crypto.decrypt(item.pop("encrypted_text"))
+    except Exception:
+        raise HTTPException(500, "Failed to decrypt item")
+    if item.get("metadata_json"):
+        item["metadata"] = json.loads(item["metadata_json"])
+    else:
+        item["metadata"] = {}
+
+    result = caldav_processor.process_item(item)
+    if result.get("success"):
+        db = await get_db()
+        await db.execute(
+            "UPDATE notes SET is_processed = 1, action_taken = ?, updated_at = ? WHERE id = ?",
+            (result.get("action", ""), datetime.now(timezone.utc).isoformat(), item_id),
+        )
+        await db.commit()
+        await db.close()
+
+    return {"status": "ok" if result.get("success") else "error", "result": result}
+
+
+@app.post("/brain/api/batch-process")
+async def api_batch_process(api_key: Optional[str] = Header(None, alias="X-API-Key")):
+    """Process all unprocessed items via CalDAV. Called by cron."""
+    if not api_key or not auth.verify_api_key(api_key):
+        raise HTTPException(403, "Valid API key required")
+
+    items = await _load_items(limit=50)
+    unprocessed = [i for i in items if not i["is_processed"]]
+
+    results = []
+    for item in unprocessed:
+        result = caldav_processor.process_item(item)
+        if result.get("success"):
+            action_taken = result.get("action", "")
+            db = await get_db()
+            await db.execute(
+                "UPDATE notes SET is_processed = 1, action_taken = ?, updated_at = ? WHERE id = ?",
+                (action_taken, datetime.now(timezone.utc).isoformat(), item["id"]),
+            )
+            await db.commit()
+            await db.close()
+        results.append(result)
+
+    created = sum(1 for r in results if r.get("success"))
+    skipped = sum(1 for r in results if r.get("status") == "skipped")
+    failed = sum(1 for r in results if not r.get("success") and r.get("status") != "skipped")
+
+    return {
+        "status": "ok",
+        "total": len(unprocessed),
+        "created": created,
+        "skipped": skipped,
+        "failed": failed,
+        "results": results,
+    }
 
 
 # ── Legacy redirects ───────────────────────────────────────────────
